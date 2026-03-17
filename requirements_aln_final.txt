@@ -1,0 +1,36 @@
+# Core DL stack (CUDA build)
+# Install torch/vision/audio first with:
+# pip install --index-url https://download.pytorch.org/whl/cu118 \
+#   torch==2.7.1+cu118 torchvision==0.22.1+cu118 torchaudio==2.7.1+cu118
+
+lightning==2.5.6
+torchmetrics==1.8.2
+lpips==0.1.4
+pytorch-msssim==1.0.0
+
+# Vision / image processing
+numpy==1.26.4
+scipy==1.15.3
+pillow==10.4.0
+opencv-python==4.9.0.80
+scikit-image==0.25.2
+matplotlib==3.10.8
+einops==0.8.1
+albumentations==2.0.4
+kornia==0.8.2
+
+# HF ecosystem (used by extract_dino_tokens32.py)
+transformers==4.56.2
+tokenizers==0.22.1
+huggingface_hub==0.36.2
+safetensors==0.4.3
+accelerate==1.10.1
+
+# Utilities
+tqdm==4.67.1
+wandb==0.22.1
+tensorboard==2.19.0
+joblib==1.5.3
+PyYAML==6.0.2
+requests==2.32.5
+packaging==24.2

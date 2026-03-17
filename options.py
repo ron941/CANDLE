@@ -1,0 +1,122 @@
+import argparse
+
+parser = argparse.ArgumentParser()
+
+# Input Parameters
+parser.add_argument('--cuda', type=str, default='3')
+parser.add_argument("--num_gpus",type=int,default=1,help = "Number of GPUs to use for training")
+
+# Training parameters
+parser.add_argument('--epochs', type=int, default=300, help='maximum number of epochs to train the total model.')
+parser.add_argument('--batch_size', type=int,default=1,help="Batch size to use per GPU")
+parser.add_argument('--val_batch_size', type=int, default=1, help='batch size for validation loader')
+parser.add_argument('--accumulate_grad_batches', type=int, default=1, help='gradient accumulation steps')
+parser.add_argument('--lr', type=float, default=2e-4, help='learning rate of encoder.')
+parser.add_argument('--num_workers', type=int, default=16, help='number of workers.')
+parser.add_argument('--patch_size', type=int, default=512, help='patchsize of input.')
+parser.add_argument('--patch_height', type=int, default=0, help='optional train patch height (0 uses patch_size)')
+parser.add_argument('--patch_width', type=int, default=0, help='optional train patch width (0 uses patch_size)')
+parser.add_argument('--train_crop_mode', type=str, default='random', choices=['random', 'fixed', 'none'], help='train crop mode')
+parser.add_argument('--train_crop_x', type=int, default=-1, help='train fixed crop x (used when train_crop_mode=fixed)')
+parser.add_argument('--train_crop_y', type=int, default=-1, help='train fixed crop y (used when train_crop_mode=fixed)')
+parser.add_argument('--val_patch_height', type=int, default=768, help='validation patch height (0 disables val crop)')
+parser.add_argument('--val_patch_width', type=int, default=1024, help='validation patch width (0 disables val crop)')
+parser.add_argument('--val_crop_mode', type=str, default='fixed', choices=['random', 'fixed', 'none'], help='validation crop mode')
+parser.add_argument('--val_crop_x', type=int, default=-1, help='validation fixed crop x (center if <0)')
+parser.add_argument('--val_crop_y', type=int, default=-1, help='validation fixed crop y (center if <0)')
+parser.add_argument('--use_data_aug', type=int, default=1, help='enable train-time data augmentation')
+parser.add_argument('--aug_hflip_prob', type=float, default=0.5, help='probability of horizontal flip')
+parser.add_argument('--aug_vflip_prob', type=float, default=0.5, help='probability of vertical flip')
+parser.add_argument('--aug_rotate90', type=int, default=1, help='enable random 0/90/180/270 rotation')
+parser.add_argument('--disable_aug_if_fullres', type=int, default=1, help='disable augmentation when crop covers full image')
+parser.add_argument('--resize_width', type=int, default=None, help='resize width of input. default=None disables in-loader resize.')
+parser.add_argument("--wblogger",type=str,default="candle",help = "Determine to log to wandb or not and the project name")
+parser.add_argument("--ckpt_dir",type=str,default="/raid/ron/ALN_768/candle-main-ori-dino-4stage-HVI-edge-final/train_ckpt_ps512_gpu3_bs1_psfdr_bfacg_on00",help = "Name of the Directory where the checkpoint is to be saved")
+parser.add_argument("--resume_from",type=str,default=None,help = "Path to checkpoint to resume training from")
+parser.add_argument("--resume_weights_only", type=int, default=0, help="if 1, load weights from resume_from but do not restore optimizer/epoch state")
+parser.add_argument("--save_last_ckpt", type=int, default=1, help="save last checkpoint in addition to best checkpoint")
+parser.add_argument("--optimizer_type", type=str, default="adam", choices=["adam", "adamw"], help="optimizer type for main branch")
+parser.add_argument("--adam_beta1", type=float, default=0.9, help="Adam beta1")
+parser.add_argument("--adam_beta2", type=float, default=0.99, help="Adam beta2")
+parser.add_argument("--weight_decay", type=float, default=0.0, help="weight decay for optimizer")
+parser.add_argument("--scheduler_type", type=str, default="fixed", choices=["fixed", "cosine", "warmup_cosine"], help="lr scheduler type")
+parser.add_argument("--scheduler_warmup_epochs", type=int, default=0, help="warmup epochs for warmup_cosine")
+parser.add_argument("--scheduler_tmax_epochs", type=int, default=0, help="T_max for cosine scheduler (0 uses total epochs)")
+parser.add_argument("--scheduler_min_lr", type=float, default=1e-6, help="minimum lr for cosine scheduler")
+parser.add_argument("--dino_dim", type=int, default=1024, help="Channel dimension of DINO tokens")
+parser.add_argument("--query_dim", type=int, default=32, help="Channel dimension after projecting DINO tokens to query")
+parser.add_argument("--use_psf_dr", type=int, default=1, help="Enable stage-wise PSF + D-R fusion for DINO query path")
+parser.add_argument("--dr_heads", type=int, default=4, help="Number of heads in D-R fusion block")
+parser.add_argument("--dr_dropout", type=float, default=0.0, help="Dropout in D-R attention")
+parser.add_argument("--dr_alpha_init", type=float, default=0.0, help="Initial residual scale alpha in D-R fusion block")
+parser.add_argument("--psf_gate_hidden", type=int, default=64, help="Hidden width of PSF gating MLP")
+parser.add_argument("--use_sffb_decoder", type=int, default=0, help="Enable pre-concat SFFB blocks at decoder stage3/stage2 skip fusion")
+parser.add_argument("--use_bfacg_decoder", type=int, default=1, help="Enable BFACG blocks at decoder stage2/stage1")
+parser.add_argument("--bfacg_hidden", type=int, default=64, help="Hidden channels used in BFACG guide network")
+parser.add_argument("--bfacg_res_scale_init", type=float, default=0.0, help="Initial residual scale for BFACG output")
+parser.add_argument("--bfacg_variant", type=str, default="v1", choices=["v1", "v1_5"], help="Choose BFACG decoder variant (v1 or v1_5)")
+parser.add_argument("--bfacg_neutral_k", type=float, default=0.3, help="Neutral-region boost strength for BFACG v1_5")
+parser.add_argument("--use_clp_decoder", type=int, default=0, help="Enable Color-Line Projection after BFACG at decoder stage2/stage1")
+parser.add_argument("--clp_latent_ch", type=int, default=16, help="Latent chroma channels in CLP")
+parser.add_argument("--clp_res_scale_init", type=float, default=0.0, help="Initial residual scale for CLP output")
+parser.add_argument("--clp_conf_bias_init", type=float, default=-2.0, help="Initial bias for CLP confidence head")
+parser.add_argument("--use_ica7", type=int, default=0, help="Enable 7-point ICA injection (enc1/2/3 + latent + dec3/2/1)")
+parser.add_argument("--use_abc_ica", type=int, default=0, help="Enable ABC-aligned ICA with learnable Hist/Lab auxiliary branches")
+parser.add_argument("--ica_aux_ch", type=int, default=32, help="Auxiliary channel width of ICA prior encoder")
+parser.add_argument("--ica_hidden", type=int, default=64, help="Hidden width of ICA gate network")
+parser.add_argument("--ica_res_scale_init", type=float, default=0.0, help="Initial residual scale for ICA inject blocks")
+parser.add_argument(
+    "--abc_hist_ckpt",
+    type=str,
+    default="/raid/ron/ALN_768/ABC-Former-main/ABC-Former/checkpoints_CL3AN_resize512/hist/Hist_d16_last.pth",
+    help="Checkpoint path for ABC Hist auxiliary branch",
+)
+parser.add_argument(
+    "--abc_lab_ckpt",
+    type=str,
+    default="/raid/ron/ALN_768/ABC-Former-main/ABC-Former/checkpoints_CL3AN_resize512/lab/Lab_d16_last.pth",
+    help="Checkpoint path for ABC Lab auxiliary branch",
+)
+parser.add_argument("--abc_aux_embed_dim", type=int, default=16, help="Embed dim for ABC Hist/Lab auxiliary branches")
+parser.add_argument("--abc_hist_loss_w", type=float, default=1.0, help="Loss weight for ABC Hist branch")
+parser.add_argument("--abc_lab_loss_w", type=float, default=1.0, help="Loss weight for ABC Lab branch")
+parser.add_argument("--abc_detach_aux_weight", type=int, default=1, help="Detach ABC auxiliary weights before injecting to main trunk")
+parser.add_argument("--use_hvi_bottleneck", type=int, default=0, help="Enable HVI bottleneck residual branch")
+parser.add_argument("--sir_attn_dim", type=int, default=64, help="Attention channel width in HVI-SIR bottleneck")
+parser.add_argument("--sir_heads", type=int, default=4, help="Attention heads in HVI-SIR bottleneck")
+parser.add_argument("--sir_dropout", type=float, default=0.0, help="Dropout in HVI-SIR bottleneck")
+parser.add_argument("--sir_lambda_init", type=float, default=0.0, help="Initial value for illumination subtraction lambda (before sigmoid)")
+parser.add_argument("--sir_use_blur_ill", type=int, default=1, help="Use fixed blur on HVI intensity prior before illumination attention")
+parser.add_argument("--hvi_eps", type=float, default=1e-8, help="Numerical epsilon for analytical HVI")
+parser.add_argument("--hvi_consistency_weight", type=float, default=0.0, help="Weight of lightweight HVI consistency loss (0 disables)")
+parser.add_argument("--lpips_lambda", type=float, default=0.0, help="Weight for LPIPS loss term")
+parser.add_argument("--ssim_lambda", type=float, default=0.7, help="Weight for SSIM loss term (SSIM loss is 1-SSIM)")
+parser.add_argument("--use_lowfreq_bias_baseline", type=int, default=0, help="Enable minimal low-frequency chroma bias baseline instead of CANDLE")
+parser.add_argument("--lfb_hidden", type=int, default=32, help="Hidden channels for low-frequency chroma bias baseline")
+parser.add_argument("--lfb_kernel_size", type=int, default=11, help="Gaussian low-pass kernel size for low-frequency chroma bias baseline")
+parser.add_argument("--lfb_sigma", type=float, default=3.0, help="Gaussian sigma for low-frequency chroma bias baseline")
+parser.add_argument("--lfb_bias_loss_w", type=float, default=1.0, help="Weight of bias regression loss for low-frequency baseline")
+parser.add_argument("--lfb_recon_loss_w", type=float, default=0.0, help="Weight of RGB reconstruction monitor term for low-frequency baseline (no gradient backprop)")
+
+# Training path
+parser.add_argument('--train_input_dir', type=str, default='/raid/ron/ALN_768/dataset/CL3AN_id20/train/input', help='training input data path.')
+parser.add_argument('--train_normals_dir', type=str, default='/raid/ron/ALN_768/dataset/CL3AN_id20/train/normals', help='training depth data path.')
+parser.add_argument('--train_target_dir', type=str, default='/raid/ron/ALN_768/dataset/CL3AN_id20/train/gt', help='training target data path.')
+parser.add_argument('--train_dino_dir', type=str, default='/raid/ron/ALN_768/dataset/CL3AN_id20/train/dino_tokens32', help='training DINO token path (.npy)')
+parser.add_argument('--dino_suffix', type=str, default="_dino32", help='Optional suffix appended to input stem for DINO file lookup')
+parser.add_argument('--train_dino_crop_manifest', type=str, default='', help='Optional CSV manifest for mapping input image -> pixel crop box used to crop full-image DINO tokens')
+
+# Testing / Inference path
+parser.add_argument('--test_input_dir', type=str, default='/raid/ron/ALN_768/dataset/CL3AN_id20/test/input', help='test input data path.')
+parser.add_argument('--test_normals_dir', type=str, default='/raid/ron/ALN_768/dataset/CL3AN_id20/test/normals', help='test depth data path.')
+parser.add_argument('--test_target_dir', type=str, default='/raid/ron/ALN_768/dataset/CL3AN_id20/test/gt', help='test target data path.')
+parser.add_argument('--test_dino_dir', type=str, default='/raid/ron/ALN_768/dataset/CL3AN_id20/test/dino_tokens32', help='test DINO token path (.npy)')
+parser.add_argument('--test_dino_crop_manifest', type=str, default='', help='Optional CSV manifest for mapping input image -> pixel crop box used to crop full-image DINO tokens')
+parser.add_argument('--dino_ref_width', type=int, default=0, help='Reference image width used by dino crop manifest coordinates')
+parser.add_argument('--dino_ref_height', type=int, default=0, help='Reference image height used by dino crop manifest coordinates')
+parser.add_argument('--pretrained_ckpt_path', type=str, default='./pretrained_ckpt/candle.ckpt', help='pretrained checkpoint path.')
+
+# Inference and testing output path
+parser.add_argument('--output_path', type=str, default="output/", help='output save path')
+
+options = parser.parse_args()
