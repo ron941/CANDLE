@@ -169,23 +169,22 @@ python extract_dino_tokens32.py
 
 ---
 
-## 🦾 Pretrained Models
+## 🦾 Pretrained Checkpoint
 
-Pretrained weights will be released.
+A pretrained CANDLE checkpoint is included in this repository via Git LFS:
 
-Please place downloaded weights under:
+[`pretrained_ckpt/candle.ckpt`](pretrained_ckpt/candle.ckpt)
+
+The default inference path already points to:
 
 ```text
-pretrained_weights/
+./pretrained_ckpt/candle.ckpt
 ```
 
-Expected structure:
+After cloning, run Git LFS pull if the checkpoint appears as a small pointer file:
 
-```text
-pretrained_weights/
-├── candle_color.pth
-├── candle_white.pth
-└── ...
+```bash
+git lfs pull
 ```
 
 ---
