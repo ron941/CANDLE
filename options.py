@@ -51,7 +51,7 @@ parser.add_argument("--dr_dropout", type=float, default=0.0, help="Dropout in D-
 parser.add_argument("--dr_alpha_init", type=float, default=0.0, help="Initial residual scale alpha in D-R fusion block")
 parser.add_argument("--psf_gate_hidden", type=int, default=64, help="Hidden width of PSF gating MLP")
 parser.add_argument("--use_sffb_decoder", type=int, default=0, help="Enable pre-concat SFFB blocks at decoder stage3/stage2 skip fusion")
-parser.add_argument("--use_bfacg_decoder", type=int, default=1, help="Enable BFACG blocks at decoder stage2/stage1")
+parser.add_argument("--use_bfacg_decoder", type=int, default=0, help="Enable BFACG blocks at decoder stage2/stage1")
 parser.add_argument("--bfacg_hidden", type=int, default=64, help="Hidden channels used in BFACG guide network")
 parser.add_argument("--bfacg_res_scale_init", type=float, default=0.0, help="Initial residual scale for BFACG output")
 parser.add_argument("--bfacg_variant", type=str, default="v1", choices=["v1", "v1_5"], help="Choose BFACG decoder variant (v1 or v1_5)")

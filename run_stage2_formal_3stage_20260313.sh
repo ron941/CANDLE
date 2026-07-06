@@ -21,7 +21,7 @@ CUDA_VISIBLE_DEVICES=0 python $PROJ/train.py \
   --val_crop_mode none --val_patch_height 0 --val_patch_width 0 \
   --lpips_lambda 0.0 --ssim_lambda 0.7 \
   --query_dim 32 --use_psf_dr 1 --dr_heads 4 --dr_dropout 0.0 --dr_alpha_init 0.0 --psf_gate_hidden 64 \
-  --use_sffb_decoder 0 --use_bfacg_decoder 1 --bfacg_variant v1 --bfacg_hidden 64 --bfacg_res_scale_init 0.0 \
+  --use_sffb_decoder 0 --use_bfacg_decoder 0 --bfacg_variant v1 --bfacg_hidden 64 --bfacg_res_scale_init 0.0 \
   --use_clp_decoder 0 --use_hvi_bottleneck 0 --hvi_consistency_weight 0.0 \
   --save_last_ckpt 1 \
   --resume_from $INIT --resume_weights_only 1 \
@@ -51,7 +51,7 @@ CUDA_VISIBLE_DEVICES=0 python $PROJ/train.py \
   --val_crop_mode none --val_patch_height 0 --val_patch_width 0 \
   --lpips_lambda 0.0 --ssim_lambda 0.7 \
   --query_dim 32 --use_psf_dr 1 --dr_heads 4 --dr_dropout 0.0 --dr_alpha_init 0.0 --psf_gate_hidden 64 \
-  --use_sffb_decoder 0 --use_bfacg_decoder 1 --bfacg_variant v1 --bfacg_hidden 64 --bfacg_res_scale_init 0.0 \
+  --use_sffb_decoder 0 --use_bfacg_decoder 0 --bfacg_variant v1 --bfacg_hidden 64 --bfacg_res_scale_init 0.0 \
   --use_clp_decoder 0 --use_hvi_bottleneck 0 --hvi_consistency_weight 0.0 \
   --save_last_ckpt 1 \
   --resume_from $S1_BEST --resume_weights_only 1 \
@@ -81,7 +81,7 @@ CUDA_VISIBLE_DEVICES=0 python $PROJ/train.py \
   --val_crop_mode none --val_patch_height 0 --val_patch_width 0 \
   --lpips_lambda 0.0 --ssim_lambda 0.7 \
   --query_dim 32 --use_psf_dr 1 --dr_heads 4 --dr_dropout 0.0 --dr_alpha_init 0.0 --psf_gate_hidden 64 \
-  --use_sffb_decoder 0 --use_bfacg_decoder 1 --bfacg_variant v1 --bfacg_hidden 64 --bfacg_res_scale_init 0.0 \
+  --use_sffb_decoder 0 --use_bfacg_decoder 0 --bfacg_variant v1 --bfacg_hidden 64 --bfacg_res_scale_init 0.0 \
   --use_clp_decoder 0 --use_hvi_bottleneck 0 --hvi_consistency_weight 0.0 \
   --save_last_ckpt 1 \
   --resume_from $S2_BEST --resume_weights_only 1 \
